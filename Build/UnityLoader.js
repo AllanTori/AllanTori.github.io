@@ -206,19 +206,44 @@ var UnityLoader = UnityLoader || {
         var xhr = new XMLHttpRequest();
         xhr.open("GET", gameInstance.url, true);
         xhr.responseType = "text";
+        xhr.onerror = function() {
+          console.log("Could not download " + gameInstance.url);
+          if (document.URL.indexOf("file:") == 0)
+          {
+            alert ("It seems your browser does not support running Unity WebGL content from file:// urls. Please upload it to an http server, or try a different browser.");
+          }   
+        }
         xhr.onload = function () {
           var parameters = JSON.parse(xhr.responseText);
           for (var parameter in parameters) {
             if (typeof Module[parameter] == "undefined")
               Module[parameter] = parameters[parameter];
           }
+
+          var graphicsApiMatch = false;
+          for(var i = 0; i < Module.graphicsAPI.length; i++) {
+            var api = Module.graphicsAPI[i];
+            if (api == "WebGL 2.0" && UnityLoader.SystemInfo.hasWebGL == 2) {
+                graphicsApiMatch = true;
+            }
+            else if (api == "WebGL 1.0" && UnityLoader.SystemInfo.hasWebGL >= 1) {
+                graphicsApiMatch = true;
+            }
+            else
+              Module.print("Warning: Unsupported graphics API " + api);
+          }
+          if (!graphicsApiMatch) {
+            gameInstance.popup("Your browser does not support any of the required graphics API for this content: " + Module.graphicsAPI, [{text: "OK"}]);
+            return;
+          }
+
           container.style.background = Module.backgroundUrl ? "center/cover url('" + Module.resolveBuildUrl(Module.backgroundUrl) + "')" :
             Module.backgroundColor ? " " + Module.backgroundColor : "";
           UnityLoader.loadModule(Module);
         }
         xhr.send();
       }, function () {
-        console.log("Instantiation of the '" + url + "' terminated due to the failed compatibility check.");
+        Module.print("Instantiation of the '" + url + "' terminated due to the failed compatibility check.");
       });
       
       return true;
@@ -271,7 +296,7 @@ var UnityLoader = UnityLoader || {
     var nVer = navigator.appVersion;
     var nAgt = navigator.userAgent;
     var browser = navigator.appName;
-    var version = "" + parseFloat(navigator.appVersion);
+    var version = navigator.appVersion;
     var majorVersion = parseInt(navigator.appVersion, 10);
     var nameOffset, verOffset, ix;
     if ((verOffset = nAgt.indexOf("Opera")) != -1) {
@@ -316,6 +341,7 @@ var UnityLoader = UnityLoader || {
       version = "" + parseFloat(navigator.appVersion);
       majorVersion = parseInt(navigator.appVersion, 10);
     }
+    else version = "" + parseFloat(version);
     var mobile = /Mobile|mini|Fennec|Android|iP(ad|od|hone)/.test(nVer);
     var os = unknown;
     var clientStrings = [
@@ -354,6 +380,7 @@ var UnityLoader = UnityLoader || {
         break;
       }
     }
+
     var osVersion = unknown;
     if (/Windows/.test(os)) {
       osVersion = /Windows (.*)/.exec(os)[1];
@@ -379,6 +406,17 @@ var UnityLoader = UnityLoader || {
       mobile: mobile,
       os: os,
       osVersion: osVersion,
+      gpu: (function() {
+        var canvas = document.createElement("canvas");
+        var gl = canvas.getContext("experimental-webgl");
+        if(gl) {
+          var renderedInfo = gl.getExtension("WEBGL_debug_renderer_info");
+          if(renderedInfo) {
+            return gl.getParameter(renderedInfo.UNMASKED_RENDERER_WEBGL);
+          }
+        }
+        return unknown;
+      })(),
       language: window.navigator.userLanguage || window.navigator.language,
       hasWebGL: (function() {
         if (!window.WebGLRenderingContext) {
@@ -387,9 +425,9 @@ var UnityLoader = UnityLoader || {
         var canvas = document.createElement("canvas");
         var gl = canvas.getContext("webgl2");
         if (!gl) {
-          var gl = canvas.getContext("experimental-webgl2");
+          gl = canvas.getContext("experimental-webgl2");
           if (!gl) {
-            var gl = canvas.getContext("webgl");
+            gl = canvas.getContext("webgl");
             if (!gl) {
               gl = canvas.getContext("experimental-webgl");
               if (!gl) {
@@ -409,7 +447,7 @@ var UnityLoader = UnityLoader || {
       hasFullscreen: (function() {
         var e = document.createElement("canvas");
         if (e["requestFullScreen"] || e["mozRequestFullScreen"] || e["msRequestFullscreen"] || e["webkitRequestFullScreen"]) {
-          if (browser.indexOf("Safari") == -1) return 1;
+          if (browser.indexOf("Safari") == -1 || version >= 10.1) return 1;
         }
         return 0;
       })(),
@@ -531,9 +569,9 @@ var UnityLoader = UnityLoader || {
         return;
       if (this.didShowErrorMessage)
         return;
-      var message = "An error occured running the Unity content on this page. See your browser JavaScript console for more info. The error was:\n" + message;
+      var message = "An error occurred running the Unity content on this page. See your browser JavaScript console for more info. The error was:\n" + message;
       if (message.indexOf("DISABLE_EXCEPTION_CATCHING") != -1) {
-        message = "An exception has occured, but exception handling has been disabled in this build. If you are the developer of this content, enable exceptions in your project WebGL player settings to be able to catch the exception or see the stack trace.";
+        message = "An exception has occurred, but exception handling has been disabled in this build. If you are the developer of this content, enable exceptions in your project WebGL player settings to be able to catch the exception or see the stack trace.";
       } else if (message.indexOf("Cannot enlarge memory arrays") != -1) {
         message = "Out of memory. If you are the developer of this content, try allocating more memory to your WebGL build in the WebGL player settings.";
       } else if (message.indexOf("Invalid array buffer length") != -1  || message.indexOf("Invalid typed array length") != -1 || message.indexOf("out of memory") != -1) {
@@ -1048,6 +1086,10 @@ var UnityLoader = UnityLoader || {
     },
     decompress: function (compressed, callback) {
       var decompressor = this.gzip.hasUnityMarker(compressed) ? this.gzip : this.brotli.hasUnityMarker(compressed) ? this.brotli : this.identity;
+      if (this.serverSetupWarningEnabled && decompressor != this.identity) {
+        console.log("You can reduce your startup time if you configure your web server to host .unityweb files using " + (decompressor == this.gzip ? "gzip" : "brotli") + " compression.");
+        this.serverSetupWarningEnabled = false;
+      }
       if (typeof callback != "function")
         return decompressor.decompress(compressed);
       if (!decompressor.worker) {
@@ -1070,8 +1112,8 @@ var UnityLoader = UnityLoader || {
       var id = decompressor.worker.nextCallbackId++;
       decompressor.worker.callbacks[id] = callback;
       decompressor.worker.postMessage({id: id, compressed: compressed}, [compressed.buffer]);
-      
     },
+    serverSetupWarningEnabled: true,
   },  
 
 };
