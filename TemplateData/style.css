@@ -18,9 +18,9 @@
 .webgl-content .footer .title {margin-right: 10px; float: right; color:white}
 .webgl-content .footer .fullscreen {background-image: url('fullscreen.png'); width: 38px; float: right;}
 .btnVol {background-image: url('button_vol.png'); background-color: rgba(0,0,0,0); background-repeat: no-repeat; float: left; width: 113px; height: 40px; margin-right: 10px}
-.btnPlus {background-image: url('vol+.png'); background-color: rgba(0,0,0,0); background-repeat: no-repeat; float: left; width: 50px; height: 50px;}
+.btnPlus {background-image: url('volmais.png'); background-color: rgba(0,0,0,0); background-repeat: no-repeat; float: left; width: 50px; height: 50px;}
 .btnMinus {background-image: url('vol-.png'); background-color: rgba(0,0,0,0); background-repeat: no-repeat; float: left; width: 50px; height: 50px;}
-.btnPlus:hover { background-image: url('vol+_hover.png')}
+.btnPlus:hover { background-image: url('volmais_hover.png')}
 .btnMinus:hover {background-image: url('vol-_hover.png')}
 .fb-like {padding-left:30%;}
 
