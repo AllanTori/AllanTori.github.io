@@ -1,0 +1,9 @@
+{
+"TOTAL_MEMORY": 268435456,
+"dataUrl": "Brotli.data.unityweb",
+"asmCodeUrl": "Brotli.asm.code.unityweb",
+"asmMemoryUrl": "Brotli.asm.memory.unityweb",
+"asmFrameworkUrl": "Brotli.asm.framework.unityweb",
+"splashScreenStyle": "Dark",
+"backgroundColor": "#222C36"
+}
