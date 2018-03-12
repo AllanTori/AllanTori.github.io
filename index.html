@@ -3,6 +3,11 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta property="og:url"           content="https://allantori.azurewebsites.net" />
+	<meta property="og:type"          content="Portfolio" />
+	<meta property="og:title"         content="3D Portfolio" />
+	<meta property="og:description"   content="" />
+	<meta property="og:image"         content="https://allantori.azurewebsites.net/TemplateData/fundo_web.jpg" />
     <title> Portfólio Web - Allan Tori </title>
     <link rel="shortcut icon" href="TemplateData/logo.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
@@ -12,6 +17,14 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>	
     <script>
+	//jquery
+	$( function() { 	
+	   $('.down').click( function() { 
+		   console.log("about me 4");
+		   $('html,body').animate( {scrollTop:$('#aboutme').offset().top}, 1000);
+	   });    
+	});	
+	//end jquery	
         var gameInstance = UnityLoader.instantiate("gameContainer", "Build/Build.json");
         var d = new Date();
 		var recenter = 0;
@@ -32,9 +45,13 @@
 	
 	function gotolink(tipo, posicao)
 	{
-		console.log(json[tipo][posicao]);
-		
-		window.open(json[tipo][posicao], '_blank');
+		//console.log(json[tipo][posicao]);
+		if(tipo !="linkedin"){
+			window.open(json[tipo][posicao], '_blank');
+		}else{
+			window.open(posicao, '_blank');
+
+		}
 	}	
 	
 	function volume(sinal) {			
@@ -81,6 +98,11 @@
 		}
 	}
 	
+	function adjustLogo(){
+		if(start_all)
+			gameInstance.SendMessage("CameraControl", "adjust_logo");
+	}
+	
 	function goto(divId){
 		document.getElementById(divId).scrollIntoView();
 	}
@@ -107,11 +129,9 @@
     <div class="webgl-content" style="cursor:pointer">
       <div id="gameContainer" style="width: 960px; height: 600px" onmousemove="getXYaxis(event)"></div>
       <div class="footer">
-        <div class="allan-logo" onclick ="goto('aboutme')"></div>
-        <div class="fullscreen" onclick="gameInstance.SetFullscreen(1)"></div>
-		<button class= "btnVol" ></button>
-		<button class= "btnPlus" onclick="volume(1)" ></button>
-		<button class= "btnMinus" onclick="volume(-1)"></button>	
+	  
+        <div class="fullscreen" onclick="gameInstance.SetFullscreen(1)"></div>			
+	<div class="down"></div>	
 	<div class="fb-like" data-href="https://allantori.github.io/" data-layout="button_count" data-action="like" data-size="small" data-show-faces="true" data-share="true" style="float:a"></div>		
         <div class="title"></div>
 	    <img id="aboutme" src="TemplateData/AboutMe.jpg" class="img" onclick="gotoWeb('https://www.linkedin.com/in/allan-tori')" style="cursor:pointer">
