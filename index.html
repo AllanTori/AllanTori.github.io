@@ -25,12 +25,16 @@
 	   });    
 	});	
 	//end jquery	
-        var gameInstance = UnityLoader.instantiate("gameContainer", "Build/Builds.json");
-        var d = new Date();
-		var recenter = 0;
-	    var center_y = window.innerHeight/2;
-		var start_all = false;
-        var json;
+	var gameInstance = UnityLoader.instantiate("gameContainer", "Build/Builds.json");
+	var d = new Date();
+	var recenter = 0;
+	var center_y = window.innerHeight/2;
+	var start_all = false;
+	var json;
+	var holdingClick = false;
+	var cursorX = 0;
+	var cursorY = 0;
+	var sensibility = 200;
 	json = {
 	"Frame_realidadeVirtual":[ "http://www.dinosdobrasil.com.br/index-en.html", "http://www.vrmonkey.com.br/projects/7vrwonders/index.html", "http://www1.sp.senac.br/hotsites/blogs/revistainiciacao/index.php/modelagem-realistica-de-cabeca-infantil-para-aplicacao-em-simulador-de-anestesia-odontologica/" ],
 	"Frame_web":[ "http://mic.sp.senac.br/", "http://www.idsbrasil.org/" ],
@@ -61,11 +65,10 @@
 	
 	function getXYaxis(event) {		
 		//var coords = "X coords: " + x + ", Y coords: " + y;
-		var w = window.innerWidth/360;
-		var h = window.innerHeight/90;
-		var x = event.clientX;
-		var y = event.clientY;
-		var pitch = 2*(y - (center_y + recenter))/h;
+		//var w = window.innerWidth/360;
+		//var h = window.innerHeight/90;
+		
+		/*var pitch = 2*(y - (center_y + recenter))/h;
 		var yaw = 2*(x - (window.innerWidth/2))/w;
 		
 		if(pitch < -90){
@@ -76,16 +79,30 @@
 			pitch = 90;
 		}else {
 			recenter = 0;
+		}*/
+		
+		if(cursorX < event.clientX){
+		
+			
+			inputX = Math.abs((cursorX - event.clientX)/window.innerWidth)*sensibility;
+		}else{
+			inputX = -1*Math.abs((cursorX - event.clientX)/window.innerWidth)*sensibility;
 		}
 		
-		posx = yaw.toString();
-		posy = pitch.toString();
+		if(cursorY < event.clientY){
+			inputY = -1*Math.abs((cursorY - event.clientY)/window.innerHeight)*sensibility;
+		}else{
+			inputY = Math.abs((cursorY - event.clientY)/window.innerHeight)*sensibility;
+		}		
 		
-		var pos = posx+";"+posy;
+		cursorX = event.clientX;
+		cursorY = event.clientY;		
+		
+		var input = inputX+";"+inputY;
 		//console.log(pos);
 		//console.log(d.getTime());
-		if(start_all)
-			gameInstance.SendMessage("CameraControl", "mouse", pos);
+		if(start_all && holdingClick)
+			gameInstance.SendMessage("CameraControl", "mouse", input);
 	}
 	
 	function printMousePos(event) {
@@ -113,7 +130,18 @@
 	function gotoWeb(web){
 		window.open(web.toString(), '_blank');
 	}
+	
+	function holdingClickEvent(){
+		holdingClick = true;
+	}
+	
+	function releasingClickEvent(){
+		holdingClick = false;
+	}
+	
 	document.addEventListener("click", printMousePos);
+	
+	
     </script>
   </head>
   <body>
@@ -125,9 +153,9 @@
   js.src = 'https://connect.facebook.net/pt_BR/sdk.js#xfbml=1&version=v2.11';
   fjs.parentNode.insertBefore(js, fjs);
 }(document, 'script', 'facebook-jssdk'));</script>
-	<div class="bg" onmousemove="getXYaxis(event)"></div>
+	<div class="bg" onmousemove="getXYaxis(event)" onmouseup="releasingClickEvent()"></div>
     <div class="webgl-content" style="cursor:pointer">
-      <div id="gameContainer" style="width: 960px; height: 600px" onmousemove="getXYaxis(event)"></div>
+      <div id="gameContainer" style="width: 960px; height: 600px" onmousemove="getXYaxis(event)" onmousedown="holdingClickEvent()" onmouseup="releasingClickEvent()"></div>
       <div class="footer">
 	  
         <div class="fullscreen" onclick="gameInstance.SetFullscreen(1)"></div>			
